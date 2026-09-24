@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>雞舍採食量紀錄｜7日預估</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--text:#18212f;--muted:#667085;--line:#e2e6ec;--blue:#2563eb;--green:#15803d;--orange:#c2410c;--red:#dc2626}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
+header{background:#111827;color:#fff;padding:15px 14px;position:sticky;top:0;z-index:20}
+.title{font-size:21px;font-weight:850}.sub{font-size:12px;color:#cbd5e1;margin-top:4px}
+nav{display:flex;gap:7px;margin-top:12px;overflow:auto}
+nav button{border:0;background:#263244;color:#e5e7eb;padding:9px 13px;border-radius:9px;font-weight:750;white-space:nowrap}
+nav button.active{background:#fff;color:#111827}
+main{max-width:1200px;margin:auto;padding:12px 10px 30px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px #00000008}
+h2{font-size:17px;margin:0 0 10px}.note{font-size:12px;color:var(--muted);line-height:1.55;margin:0 0 10px}
+.alert{border-radius:12px;padding:12px;margin-bottom:12px;border:1px solid}
+.alert.ok{background:#f0fdf4;border-color:#bbf7d0}.alert.warn{background:#fff7ed;border-color:#fed7aa}
+.big{font-size:19px;font-weight:850}.small{font-size:12px;color:var(--muted);margin-top:4px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.kpi{background:#f8fafc;border:1px solid var(--line);border-radius:11px;padding:11px}
+.label{font-size:12px;color:var(--muted)}.value{font-size:21px;font-weight:850;margin-top:5px}.hint{font-size:11px;color:var(--muted);margin-top:2px}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;min-width:980px;font-size:12px}
+th,td{padding:8px 9px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}th{background:#f8fafc;color:var(--muted);position:sticky;top:0;z-index:1}
+tr:last-child td{border-bottom:0}
+.orderday{background:#fff7ed}.todayrow{background:#eff6ff}
+.badge{display:inline-block;padding:3px 7px;border-radius:99px;font-size:11px}.fixed{background:#ffedd5;color:#9a3412}.manual{background:#fef3c7;color:#92400e}.auto{background:#e0f2fe;color:#075985}.correction{background:#fee2e2;color:#991b1b}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+.field input{width:100%;padding:10px;border:1px solid #cfd6e1;border-radius:9px;font-size:15px;background:#fff}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+.btn{border:0;border-radius:9px;padding:10px 14px;font-weight:750;cursor:pointer}
+.primary{background:var(--blue);color:#fff}.secondary{background:#e9edf3;color:#263244}.danger{background:#fee2e2;color:#991b1b}.green{background:#dcfce7;color:#166534}
+input.tableinput{width:95px;padding:6px 7px;border:1px solid #cfd6e1;border-radius:7px;font-size:12px;text-align:right}
+.hidden{display:none!important}.empty{text-align:center;color:var(--muted);padding:25px}
+@media(max-width:760px){.kpis{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.panel{padding:12px}.kpis{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr 1fr}.value{font-size:19px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="title">🐔 雞舍採食量紀錄</div>
+  <div class="sub">固定每日採食＋星期一／三／五叫料｜可調整單日數值｜直接看未來 7 天</div>
+  <nav>
+    <button class="tab active" data-tab="today">今日／7日預估</button>
+    <button class="tab" data-tab="history">歷史</button>
+    <button class="tab" data-tab="settings">設定</button>
+    <button class="tab" data-tab="backup">備份</button>
+  </nav>
+</header>
+
+<main>
+<section id="today">
+  <div id="status" class="alert ok"></div>
+
+  <div class="panel">
+    <h2>目前飼料狀況</h2>
+    <div class="kpis">
+      <div class="kpi"><div class="label">B 今日採食</div><div class="value" id="todayB">—</div><div class="hint">kg</div></div>
+      <div class="kpi"><div class="label">A 今日採食</div><div class="value" id="todayA">—</div><div class="hint">kg</div></div>
+      <div class="kpi"><div class="label">B 今日餘量</div><div class="value" id="stockB">—</div><div class="hint">kg</div></div>
+      <div class="kpi"><div class="label">A 今日餘量</div><div class="value" id="stockA">—</div><div class="hint">kg</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>📅 未來 7 天採食／餘量／叫料</h2>
+    <p class="note">餘量依你的規則計算：<b>前一日餘量 − 當日採食量</b>。叫料只作為「叫料計畫」顯示，不直接加進餘量；若你實際盤點到餘料，輸入盤點值後，後面的日期會從該值重新往下扣。</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th>日期</th><th>星期</th><th>B採食</th><th>A採食</th><th>B叫料</th><th>A叫料</th><th>B預估餘量</th><th>A預估餘量</th><th>採食來源</th>
+        </tr></thead>
+        <tbody id="forecastBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>✏️ 單日調整</h2>
+    <p class="note">平常不用每天輸入。固定採食會自動套用；只有某一天真的不同時才改。叫料日固定是星期一、三、五，但每一天的叫料量都可以單獨調整。</p>
+    <div class="grid">
+      <div class="field"><label>日期</label><input id="editDate" type="date"></div>
+      <div class="field"><label>B 當日採食量</label><input id="editB" type="number" min="0" step="0.1"></div>
+      <div class="field"><label>A 當日採食量</label><input id="editA" type="number" min="0" step="0.1"></div>
+      <div class="field"><label>B 叫料量（只有一三五有預設）</label><input id="editOrderB" type="number" min="0" step="0.1"></div>
+      <div class="field"><label>A 叫料量（只有一三五有預設）</label><input id="editOrderA" type="number" min="0" step="0.1"></div>
+      <div class="field"><label>B 實際盤點餘量</label><input id="editStockB" type="number" min="0" step="0.1"></div>
+      <div class="field"><label>A 實際盤點餘量</label><input id="editStockA" type="number" min="0" step="0.1"></div>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="saveEdit">儲存這一天</button>
+      <button class="btn secondary" id="clearEdit">恢復自動</button>
+    </div>
+  </div>
+</section>
+
+<section id="history" class="hidden">
+  <div class="panel">
+    <h2>📋 歷史資料</h2>
+    <p class="note">不顯示「累積採食量」。這裡只保留每日採食、叫料與餘量。</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>日期</th><th>星期</th><th>B採食</th><th>A採食</th><th>B叫料</th><th>A叫料</th><th>B餘量</th><th>A餘量</th><th>來源</th></tr></thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="settings" class="hidden">
+  <div class="panel">
+    <h2>⚙️ 基本設定</h2>
+    <p class="note">這裡設定「固定每日採食量」及起始餘量。之後系統會自動產生未來日期。叫料日改成用勾選控制：勾選哪一天，就代表那一天需要叫料；預設為星期一、三、五，但可以自由增加或取消。</p>
+    <div class="grid">
+      <div class="field"><label>開始計算日期</label><input id="startDate" type="date"></div>
+      <div class="field"><label>B 固定每日採食量（kg）</label><input id="baseB" type="number" min="0" step="0.1"></div>
+      <div class="field"><label>A 固定每日採食量（kg）</label><input id="baseA" type="number" min="0" step="0.1"></div>
+      <div class="field"><label>起始 B 餘量（kg）</label><input id="startStockB" type="number" min="0" step="0.1"></div>
+      <div class="field"><label>起始 A 餘量（kg）</label><input id="startStockA" type="number" min="0" step="0.1"></div>
+      <div class="field"><label>星期一 B 預設叫料（kg）</label><input id="orderMonB" type="number" min="0" step="0.1"></div>
+      <div class="field"><label>星期一 A 預設叫料（kg）</label><input id="orderMonA" type="number" min="0" step="0.1"></div>
+      <div class="field"><label>星期三 B 預設叫料（kg）</label><input id="orderWedB" type="number" min="0" step="0.1"></div>
+      <div class="field"><label>星期三 A 預設叫料（kg）</label><input id="orderWedA" type="number" min="0" step="0.1"></div>
+      <div class="field"><label>星期五 B 預設叫料（kg）</label><input id="orderFriB" type="number" min="0" step="0.1"></div>
+      <div class="field"><label>星期五 A 預設叫料（kg）</label><input id="orderFriA" type="number" min="0" step="0.1"></div>
+    </div>
+    <div style="margin-top:14px">
+      <div style="font-size:13px;font-weight:800;margin-bottom:8px">🚚 叫料日</div>
+      <div class="note">勾選代表「這一天需要叫料」。預設已勾選星期一、星期三、星期五；可以自由增加或取消。</div>
+      <div id="orderDayChecks" style="display:grid;grid-template-columns:repeat(7,1fr);gap:7px"></div>
+    </div>
+    <div class="actions"><button class="btn primary" id="saveSettings">儲存設定</button></div>
+  </div>
+  <div class="panel">
+    <h2>固定規則</h2>
+    <p class="note">① 採食：固定每日數值，特定日期可以覆蓋。<br>② 叫料日：固定星期一、星期三、星期五。<br>③ 叫料量：每個叫料日可單獨調整，不會改掉其他日期。<br>④ 餘量：前一日餘量 − 當日採食量。<br>⑤ 實際盤點：輸入後，該日成為新的餘量起點。</p>
+  </div>
+</section>
+
+<section id="backup" class="hidden">
+  <div class="panel">
+    <h2>💾 備份</h2>
+    <p class="note">資料同時存在瀏覽器的 localStorage 與 IndexedDB。重新整理不會清除。換手機或清除網站資料前，請先備份。</p>
+    <div class="actions">
+      <button class="btn primary" id="export">匯出 JSON</button>
+      <label class="btn secondary" for="importFile">匯入 JSON</label>
+      <input id="importFile" type="file" accept=".json" class="hidden">
+      <button class="btn danger" id="reset">清除資料</button>
+    </div>
+    <div id="storageStatus" class="note" style="margin-top:12px"></div>
+  </div>
+</section>
+</main>
+
+<script>
+const KEY="chickenFeedAutoV6";
+const OLD_KEY="chickenFeedAutoV5";
+const WEEK=["日","一","二","三","四","五","六"];
+const DEFAULT_ORDER_DAYS=[1,3,5];
+
+const DEFAULT={
+  settings:{
+    startDate:"2026-09-23",
+    baseB:3300,
+    baseA:4300,
+    startStockB:0,
+    startStockA:0,
+    orderDays:[1,3,5],
+    orderMonB:0,orderMonA:0,
+    orderWedB:0,orderWedA:0,
+    orderFriB:0,orderFriA:0
+  },
+  days:{},
+  events:{}
+};
+let db=JSON.parse(JSON.stringify(DEFAULT));
+
+function today(){return iso(new Date())}
+function dObj(s){const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
+function iso(d){return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)}
+function addDays(s,n){const d=dObj(s);d.setDate(d.getDate()+n);return iso(d)}
+function diff(a,b){return Math.round((dObj(b)-dObj(a))/86400000)}
+function n(v){return v===""||v==null?null:Number(v)}
+function fmt(v){return v==null||Number.isNaN(Number(v))?"—":Number(v).toLocaleString("zh-TW",{maximumFractionDigits:1})}
+function orderDay(date){return (db.settings.orderDays||DEFAULT_ORDER_DAYS).includes(dObj(date).getDay())}
+function defaultOrder(date,type){
+  const day=dObj(date).getDay(),s=db.settings;
+  if(!orderDay(date)) return 0;
+  if(day===1)return Number(s["orderMon"+type])||0;
+  if(day===3)return Number(s["orderWed"+type])||0;
+  if(day===5)return Number(s["orderFri"+type])||0;
+  return 0;
+}
+function effectiveOrder(date,type){
+  const ev=db.events[date]||{};
+  const key="order"+type;
+  if(Object.prototype.hasOwnProperty.call(ev,key)) return Number(ev[key])||0;
+  return defaultOrder(date,type);
+}
+function effectiveIntake(date,type){
+  const day=db.days[date]||{};
+  const key="override"+type;
+  if(day[key]!==null&&day[key]!==undefined&&day[key]!=="") return Number(day[key]);
+  return Number(db.settings["base"+type])||0;
+}
+function actualStock(date,type){
+  const ev=db.events[date]||{};
+  const key="stock"+type;
+  return ev[key]!==null&&ev[key]!==undefined&&ev[key]!==""?Number(ev[key]):null;
+}
+function calcRange(start,end){
+  const out=[];
+  if(!db.settings.startDate || diff(db.settings.startDate,end)<0)return out;
+  let stockB=Number(db.settings.startStockB)||0;
+  let stockA=Number(db.settings.startStockA)||0;
+  for(let date=db.settings.startDate;diff(date,end)<=0;date=addDays(date,1)){
+    const correctedB=actualStock(date,"B"),correctedA=actualStock(date,"A");
+    const b=effectiveIntake(date,"B"),a=effectiveIntake(date,"A");
+    // 有「當日實際盤點」時，盤點值就是當日餘量，不再扣一次當日採食；
+    // 下一天才從這個盤點值繼續扣除當日採食。
+    if(correctedB!==null)stockB=correctedB;
+    else stockB=stockB-b;
+    if(correctedA!==null)stockA=correctedA;
+    else stockA=stockA-a;
+    out.push({
+      date,week:WEEK[dObj(date).getDay()],b,a,
+      orderB:effectiveOrder(date,"B"),orderA:effectiveOrder(date,"A"),
+      stockB,stockA,
+      manualB:(db.days[date]||{}).overrideB!==null&&
+              (db.days[date]||{}).overrideB!==undefined&&
+              (db.days[date]||{}).overrideB!=="",
+      manualA:(db.days[date]||{}).overrideA!==null&&
+              (db.days[date]||{}).overrideA!==undefined&&
+              (db.days[date]||{}).overrideA!=="",
+      correctedB:correctedB!==null,correctedA:correctedA!==null
+    });
+  }
+  return out;
+}
+function calcThrough(date){return calcRange(db.settings.startDate,date).slice(-1)[0]||null}
+function forecast7(){
+  const end=addDays(today(),6);
+  return calcRange(db.settings.startDate,end).filter(x=>diff(today(),x.date)>=0);
+}
+function historyRows(){
+  const end=today();
+  return calcRange(db.settings.startDate,end).reverse();
+}
+
+async function openDB(){
+  if(!window.indexedDB)return null;
+  return new Promise(resolve=>{
+    const r=indexedDB.open("ChickenFeedDBV6",1);
+    r.onupgradeneeded=()=>r.result.createObjectStore("app");
+    r.onsuccess=()=>resolve(r.result);
+    r.onerror=()=>resolve(null);
+  });
+}
+async function save(){
+  const payload=JSON.stringify(db);
+  try{localStorage.setItem(KEY,payload)}catch(e){}
+  const idb=await openDB();
+  if(idb)await new Promise(resolve=>{
+    const tx=idb.transaction("app","readwrite");
+    tx.objectStore("app").put(db,"data");
+    tx.oncomplete=resolve;tx.onerror=resolve;
+  });
+}
+async function load(){
+  let loaded=null;
+  try{loaded=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){}
+  if(!loaded){
+    try{
+      const old=JSON.parse(localStorage.getItem(OLD_KEY)||"null");
+      if(old){
+        loaded=JSON.parse(JSON.stringify(DEFAULT));
+        loaded.settings=Object.assign(loaded.settings,old.settings||{});
+        for(const [date,day] of Object.entries(old.days||{})){
+          loaded.days[date]={
+            overrideB:day.overrideB??null,
+            overrideA:day.overrideA??null,
+            note:day.note||""
+          };
+        }
+        for(const [date,ev] of Object.entries(old.events||{})){
+          loaded.events[date]={
+            orderB:Object.prototype.hasOwnProperty.call(ev,"orderB")?ev.orderB:undefined,
+            orderA:Object.prototype.hasOwnProperty.call(ev,"orderA")?ev.orderA:undefined,
+            stockB:ev.stockB??null,
+            stockA:ev.stockA??null
+          };
+        }
+      }
+    }catch(e){}
+  }
+  if(loaded)db=Object.assign(JSON.parse(JSON.stringify(DEFAULT)),loaded);
+  normalize();
+}
+function normalize(){
+  db.settings=Object.assign(JSON.parse(JSON.stringify(DEFAULT.settings)),db.settings||{});
+  if(!Array.isArray(db.settings.orderDays))db.settings.orderDays=[...DEFAULT_ORDER_DAYS];
+  db.days=db.days||{};db.events=db.events||{};
+}
+function fillEdit(date){
+  const day=db.days[date]||{},ev=db.events[date]||{};
+  document.getElementById("editDate").value=date;
+  document.getElementById("editB").value=day.overrideB??"";
+  document.getElementById("editA").value=day.overrideA??"";
+  document.getElementById("editOrderB").value=Object.prototype.hasOwnProperty.call(ev,"orderB")?ev.orderB:"";
+  document.getElementById("editOrderA").value=Object.prototype.hasOwnProperty.call(ev,"orderA")?ev.orderA:"";
+  document.getElementById("editStockB").value=ev.stockB??"";
+  document.getElementById("editStockA").value=ev.stockA??"";
+}
+function render(){
+  const t=today(),now=calcThrough(t);
+  document.getElementById("todayB").textContent=now?fmt(now.b):"—";
+  document.getElementById("todayA").textContent=now?fmt(now.a):"—";
+  document.getElementById("stockB").textContent=now?fmt(now.stockB):"—";
+  document.getElementById("stockA").textContent=now?fmt(now.stockA):"—";
+
+  const st=document.getElementById("status");
+  st.className=(db.settings.baseB||db.settings.baseA)?"alert ok":"alert warn";
+  st.innerHTML=(db.settings.baseB||db.settings.baseA)
+    ?'<div class="big">✓ 自動計算正常</div><div class="small">餘量只按「前一日餘量 − 當日採食量」計算。星期一、三、五固定叫料，但叫料量可逐日調整。</div>'
+    :'<div class="big">⚙️ 請先設定每日採食量與起始餘量</div><div class="small">到「設定」輸入固定 B/A 採食量及起始餘量。</div>';
+
+  renderForecast();renderHistory();fillEdit(document.getElementById("editDate").value||t);renderSettings(); 
+}
+function renderForecast(){
+  const body=document.getElementById("forecastBody"),arr=forecast7();
+  if(!arr.length){body.innerHTML='<tr><td colspan="9" class="empty">尚無資料</td></tr>';return}
+  body.innerHTML=arr.map(r=>{
+    const cls=r.date===today()?"todayrow":(orderDay(r.date)?"orderday":"");
+    const src=(r.manualB||r.manualA)?'<span class="badge manual">手動</span>':'<span class="badge auto">固定</span>';
+    const od=orderDay(r.date)?'<span class="badge fixed">需叫料</span>':'—';
+    return `<tr class="${cls}" onclick="fillEdit('${r.date}')">
+      <td>${r.date}</td><td>${r.week}</td>
+      <td>${fmt(r.b)}</td><td>${fmt(r.a)}</td>
+      <td>${r.orderB?fmt(r.orderB):od}</td><td>${r.orderA?fmt(r.orderA):od}</td>
+      <td>${fmt(r.stockB)}</td><td>${fmt(r.stockA)}</td><td>${src}</td>
+    </tr>`;
+  }).join("");
+}
+function renderHistory(){
+  const body=document.getElementById("historyBody"),arr=historyRows();
+  if(!arr.length){body.innerHTML='<tr><td colspan="9" class="empty">尚無資料</td></tr>';return}
+  body.innerHTML=arr.map(r=>{
+    const src=(r.manualB||r.manualA)?'<span class="badge manual">手動採食</span>':'<span class="badge auto">固定</span>';
+    if(r.correctedB||r.correctedA) return `<tr>
+      <td>${r.date}</td><td>${r.week}</td><td>${fmt(r.b)}</td><td>${fmt(r.a)}</td>
+      <td>${r.orderB?fmt(r.orderB):"—"}</td><td>${r.orderA?fmt(r.orderA):"—"}</td>
+      <td>${fmt(r.stockB)} ${r.correctedB?'<span class="badge correction">盤點</span>':''}</td>
+      <td>${fmt(r.stockA)} ${r.correctedA?'<span class="badge correction">盤點</span>':''}</td><td>${src}</td>
+    </tr>`;
+    return `<tr><td>${r.date}</td><td>${r.week}</td><td>${fmt(r.b)}</td><td>${fmt(r.a)}</td><td>${r.orderB?fmt(r.orderB):"—"}</td><td>${r.orderA?fmt(r.orderA):"—"}</td><td>${fmt(r.stockB)}</td><td>${fmt(r.stockA)}</td><td>${src}</td></tr>`;
+  }).join("");
+}
+function renderOrderDayChecks(){
+  const wrap=document.getElementById("orderDayChecks");
+  if(!wrap)return;
+  const selected=db.settings.orderDays||DEFAULT_ORDER_DAYS;
+  wrap.innerHTML=WEEK.map((name,day)=>`
+    <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:1px solid var(--line);border-radius:9px;padding:8px 3px;background:${selected.includes(day)?"#fff7ed":"#f8fafc"};cursor:pointer">
+      <input type="checkbox" class="orderDayCheck" data-day="${day}" ${selected.includes(day)?"checked":""} style="width:18px;height:18px">
+      <span style="font-size:12px;font-weight:750">${name}</span>
+    </label>`).join("");
+}
+function renderSettings(){
+  const s=db.settings;
+  document.getElementById("startDate").value=s.startDate;
+  document.getElementById("baseB").value=s.baseB;
+  document.getElementById("baseA").value=s.baseA;
+  document.getElementById("startStockB").value=s.startStockB;
+  document.getElementById("startStockA").value=s.startStockA;
+  for(const id of ["orderMonB","orderMonA","orderWedB","orderWedA","orderFriB","orderFriA"])document.getElementById(id).value=s[id]??0;
+  renderOrderDayChecks();
+  document.getElementById("storageStatus").textContent="資料已儲存在本機瀏覽器；重新整理不會清除。";
+}
+
+document.querySelectorAll(".tab").forEach(btn=>btn.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  btn.classList.add("active");
+  ["today","history","settings","backup"].forEach(id=>document.getElementById(id).classList.toggle("hidden",id!==btn.dataset.tab));
+  render();
+});
+document.getElementById("editDate").onchange=e=>fillEdit(e.target.value);
+document.getElementById("saveEdit").onclick=async()=>{
+  const d=document.getElementById("editDate").value;if(!d)return alert("請選日期");
+  const b=document.getElementById("editB").value,a=document.getElementById("editA").value;
+  const ob=document.getElementById("editOrderB").value,oa=document.getElementById("editOrderA").value;
+  const sb=document.getElementById("editStockB").value,sa=document.getElementById("editStockA").value;
+  if(b===""&&a==="")delete db.days[d]; else db.days[d]={overrideB:b===""?null:Number(b),overrideA:a===""?null:Number(a)};
+  const ev=db.events[d]||{};
+  if(ob==="")delete ev.orderB;else ev.orderB=Number(ob);
+  if(oa==="")delete ev.orderA;else ev.orderA=Number(oa);
+  if(sb==="")delete ev.stockB;else ev.stockB=Number(sb);
+  if(sa==="")delete ev.stockA;else ev.stockA=Number(sa);
+  if(!Object.keys(ev).length)delete db.events[d];else db.events[d]=ev;
+  await save();render();alert("已儲存這一天的調整。");
+};
+document.getElementById("clearEdit").onclick=async()=>{
+  const d=document.getElementById("editDate").value;if(!d)return;
+  delete db.days[d];delete db.events[d];await save();render();alert("已恢復這一天的自動設定。");
+};
+document.getElementById("saveSettings").onclick=async()=>{
+  const ids=["startDate","baseB","baseA","startStockB","startStockA","orderMonB","orderMonA","orderWedB","orderWedA","orderFriB","orderFriA"];
+  db.settings.startDate=document.getElementById("startDate").value||today();
+  db.settings.orderDays=[...document.querySelectorAll(".orderDayCheck:checked")].map(x=>Number(x.dataset.day));
+  for(const id of ids.slice(1))db.settings[id]=n(document.getElementById(id).value)||0;
+  await save();render();alert("設定已儲存。");
+};
+document.getElementById("export").onclick=()=>{
+  const blob=new Blob([JSON.stringify(db,null,2)],{type:"application/json;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="雞舍採食量_7日版備份.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+};
+document.getElementById("importFile").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=async()=>{try{const x=JSON.parse(rd.result);if(!x.settings)throw Error();db=x;normalize();await save();render();alert("匯入完成。");}catch(err){alert("備份格式不正確。")}};
+  rd.readAsText(f,"utf-8");e.target.value="";
+};
+document.getElementById("reset").onclick=async()=>{
+  if(confirm("確定清除全部資料？建議先匯出備份。")){db=JSON.parse(JSON.stringify(DEFAULT));await save();render();}
+};
+
+document.getElementById("editDate").value=today();
+document.getElementById("editB").value="";
+document.getElementById("editA").value="";
+document.getElementById("editOrderB").value="";
+document.getElementById("editOrderA").value="";
+document.getElementById("editStockB").value="";
+document.getElementById("editStockA").value="";
+load().then(render);
+</script>
+</body>
+</html>
